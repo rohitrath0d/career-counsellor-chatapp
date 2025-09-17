@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import "@/styles/globals.css";
 import { TRPCProvider } from "@/utils/trpcProvider";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 
 
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
@@ -14,12 +15,13 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
   // return <Component {...pageProps} />;
   return (
     <SessionProvider session={session}>
-      <TRPCProvider>
-
-        <QueryClientProvider client={queryClient}>
-          <Component {...pageProps} />
-        </QueryClientProvider>
-      </TRPCProvider>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <TRPCProvider>
+          <QueryClientProvider client={queryClient}>
+            <Component {...pageProps} />
+          </QueryClientProvider>
+        </TRPCProvider>
+      </ThemeProvider>
     </SessionProvider>
   );
 }

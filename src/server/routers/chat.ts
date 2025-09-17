@@ -1,6 +1,9 @@
-// src/server/routers/chat.ts
 import { z } from "zod";
-import { router, protectedProcedure, publicProcedure } from "../trpc/trpc";
+import { 
+  router, 
+  protectedProcedure, 
+  // publicProcedure 
+} from "../trpc/trpc";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
