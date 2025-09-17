@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+<!-- This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
 ## Getting Started
 
@@ -37,4 +37,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details. -->
+
+
+## Docs used for reference
+- [Setting up Next.js project](https://nextjs.org/docs/app/getting-started/installation)
+- [Typescript docs](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)
+- [tRPC API reference docs](https://trpc.io/docs/client/nextjs/setup)
+- [React query beginners guide](https://refine.dev/blog/react-query-guide/#introduction)
+- [Tanstack query/React query official docs](https://tanstack.com/query/latest/docs/framework/react/examples/simple)
+- [Auth.js prisma setup](https://authjs.dev/getting-started/adapters/prisma)
+- [React-hook-form docs](https://react-hook-form.com/get-started)
+
+
+- [google-docs-reference](https://docs.google.com/document/d/1qHvs5wUBzPC1WYBQaxlmUiO66J71z-j_p0XrE7mnvIk/edit?tab=t.0)

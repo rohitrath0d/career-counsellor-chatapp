@@ -1,18 +1,21 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { PrismaClient } from "@prisma/client";
-// import { prisma } from "@/server/prisma/prisma";
+// import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/server/prisma/prisma";
 import { compare, hash } from "bcryptjs";
 // import bcrypt from "bcryptjs";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
-export default NextAuth({
+// export default NextAuth({
+export const authOptions: NextAuthOptions =
+// (
+{
   adapter: PrismaAdapter(prisma),
   providers: [
-    // 🔹 Google OAuth
+    // Google OAuth
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -28,7 +31,8 @@ export default NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
-          throw new Error("Missing email or password");
+          // throw new Error("Missing email or password");
+          return null
         }
 
         const existingUser = await prisma.user.findUnique({
@@ -62,6 +66,7 @@ export default NextAuth({
             id: existingUser.id,
             email: existingUser.email,
             name: existingUser.name,
+            password: existingUser.password,
           };
         } else {
           // SIGNUP flow
@@ -82,6 +87,7 @@ export default NextAuth({
             id: newUser.id,
             email: newUser.email,
             name: newUser.name,
+            password: newUser.password,
           };
         }
       },
@@ -94,20 +100,25 @@ export default NextAuth({
 
   session: {
     // strategy: "jwt",
-    strategy: "database"
+    strategy: "database"       // using DB sessions since i have PrismaAdapter
   },
 
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.id = user.id;
-      return token;
-    },
-    async session({ session, token }) {
+    // async jwt({ token, user }) {
+    //   if (user) token.id = user.id;
+    //   return token;
+    // },
+    // async session({ session, token }) {
+    async session({ session, user }) {
       // if (token) session.user.id = token.id as string;
       if (session.user) {
-        session.user.id = token.id as string;
+        // session.user.id = token.id as string;
+        session.user.id = user.id
       }
       return session;
     },
   },
-});
+}
+// );
+
+export default NextAuth(authOptions);

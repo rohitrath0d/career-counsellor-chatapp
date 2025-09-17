@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { signIn } from "next-auth/react";
@@ -9,6 +8,7 @@ import { toast } from "sonner";
 import { FcGoogle } from "react-icons/fc";
 // import Lottie from "react-lottie-player";
 import LoginAnimation from "@/components/animations/LoginAnimation"; // put a JSON Lottie file here
+import { trpc } from "@/utils/trpc";
 
 type AuthForm = {
   email: string;
@@ -16,53 +16,89 @@ type AuthForm = {
   name?: string;
 };
 
+
+
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
   const form = useForm<AuthForm>({
     defaultValues: { email: "", password: "", name: "" },
   });
 
+
+  // tRPC mutations
+  const loginMutation = trpc.user.login.useMutation({
+    onSuccess: (user) => {
+      toast.success(`Welcome back, ${user.name}`);
+      localStorage.setItem("user", JSON.stringify(user));
+      window.location.href = "/";
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const signupMutation = trpc.user.signup.useMutation({
+    onSuccess: (user) => {
+      toast.success(`Account created for ${user.name}`);
+      setMode("login");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   // Handle credentials login/signup
-  const onSubmit = async (data: AuthForm) => {
-    setLoading(true);
+  // const onSubmit = async (data: AuthForm) => {
+  //   setLoading(true);
 
-    try {
-      if (mode === "login") {
-        const res = await signIn("credentials", {
-          redirect: false,
-          email: data.email,
-          password: data.password,
-        });
+  //   try {
+  //     if (mode === "login") {
+  //       const res = await signIn("credentials", {
+  //         redirect: false,
+  //         email: data.email,
+  //         password: data.password,
+  //         name: data.name
+  //       });
 
-        if (res?.error) {
-          toast.error("Login failed", { description: res.error });
-        } else {
-          toast.success("Welcome back!", { description: "Logged in successfully" });
-          window.location.href = "/";
-        }
-      } else {
-        // Signup first (your API to create user)
-        const res = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+  //       if (res?.error) {
+  //         toast.error("Login failed", { description: res.error });
+  //       } else {
+  //         toast.success("Welcome back!", { description: "Logged in successfully" });
+  //         window.location.href = "/";
+  //       }
+  //     }
+  //     // this part  of /sign up is handled automatically via authorize() in [...nextauth].ts
+  //     // else {
+  //     //   // Signup first (your API to create user)
+  //     //   const res = await fetch("/api/auth/signup", {
+  //     //     method: "POST",
+  //     //     headers: { "Content-Type": "application/json" },
+  //     //     body: JSON.stringify(data),
+  //     //   });
 
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.message || "Signup failed");
-        }
+  //     //   if (!res.ok) {
+  //     //     const err = await res.json();
+  //     //     throw new Error(err.message || "Signup failed");
+  //     //   }
 
-        toast.success("Account created", { description: "You can now log in" });
-        setMode("login");
-      }
-    } catch (err: any) {
-      toast.error("Error", { description: err.message });
-    } finally {
-      setLoading(false);
-    }
+  //     //   toast.success("Account created", { description: "You can now log in" });
+  //     //   setMode("login");
+  //     // }
+  //   } catch (err: any) {
+  //     toast.error("Error", { description: err.message });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const onSubmit = (data: AuthForm) => {
+    if (mode === "login") loginMutation.mutate({
+      email: data.email,
+      password: data.password
+    });
+    else signupMutation.mutate({
+      email: data.email,
+      password: data.password,
+      name: data.name!
+    });
   };
 
   return (
@@ -82,10 +118,16 @@ export default function AuthPage() {
         {/* Right - Form */}
         <CardContent className="w-full lg:w-1/2 p-8 flex flex-col justify-center">
           <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">
-            {mode === "login" ? "Welcome Back" : "Create Account"}
+            {mode === "login" 
+              ? "Welcome Back" 
+              : "Create Account"
+            }
           </h2>
           <p className="text-gray-600 text-center mb-6">
-            {mode === "login" ? "Sign in to your account" : "Sign up to get started"}
+            {mode === "login"
+              ? "Sign in to your account"
+              : "Sign up to get started"
+            }
           </p>
 
           {/* Google OAuth */}
@@ -111,7 +153,10 @@ export default function AuthPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {mode === "signup" && (
               <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-medium text-gray-700">
+                <label 
+                  htmlFor="name" 
+                  className="text-sm font-medium text-gray-700"
+                >
                   Full Name
                 </label>
                 <Input
@@ -138,7 +183,10 @@ export default function AuthPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <label 
+                htmlFor="password" 
+                className="text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <Input
@@ -153,9 +201,15 @@ export default function AuthPage() {
             <Button
               type="submit"
               className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-              disabled={loading}
+              // disabled={loading}
+              disabled={loginMutation.isPending || signupMutation.isPending}      // and can drop the extra loading state entirely, since useMutation already tracks it automatically.
             >
-              {loading ? "Processing..." : mode === "login" ? "Login" : "Sign Up"}
+              {/* {loading ? "Processing..." : mode === "login" ? "Login" : "Sign Up"} */}
+              {loginMutation.isPending || signupMutation.isPending
+                ? "Processing..."
+                : mode === "login"
+                  ? "Login"
+                  : "Sign Up"}
             </Button>
           </form>
 
@@ -164,22 +218,22 @@ export default function AuthPage() {
               {mode === "login" ? (
                 <>
                   Don’t have an account?{" "}
-                  <button
+                  <Button
                     className="text-blue-600 hover:text-blue-800 font-medium"
                     onClick={() => setMode("signup")}
                   >
                     Sign up
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
                   Already have an account?{" "}
-                  <button
+                  <Button
                     className="text-blue-600 hover:text-blue-800 font-medium"
                     onClick={() => setMode("login")}
                   >
                     Login
-                  </button>
+                  </Button>
                 </>
               )}
             </p>
