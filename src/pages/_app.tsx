@@ -14,14 +14,18 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
 
   // return <Component {...pageProps} />;
   return (
+    // QueryClientProvider must wrap TRPCProvider, otherwise useQuery inside tRPC has no React Query context
+
     <SessionProvider session={session}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+      <QueryClientProvider client={queryClient}>
         <TRPCProvider>
-          <QueryClientProvider client={queryClient}>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             <Component {...pageProps} />
-          </QueryClientProvider>
+          </ThemeProvider>
         </TRPCProvider>
-      </ThemeProvider>
+      </QueryClientProvider>
+
     </SessionProvider>
+
   );
 }

@@ -4,7 +4,8 @@ import {
   protectedProcedure,
   ee,
   // publicProcedure ,
-  observable
+  observable,
+  publicProcedure
 } from "../trpc/trpc";
 // import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -25,14 +26,15 @@ const systemPrompt =
 
 export const chatRouter = router({
   // 1. Start a new chat session
-  startChat: protectedProcedure
+  // startChat: protectedProcedure
+  startChat: publicProcedure
     .input(z.object({ title: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       // const userId = ctx.session.user.id
       const chat = await ctx.prisma.chat.create({
         data: {
           title: input.title ?? "New Chat",
-          userId: ctx.session.user.id,
+          userId: ctx.session!.user.id,
         },
       });
       return chat;
@@ -40,7 +42,9 @@ export const chatRouter = router({
 
   // 2. Get all chats of logged-in user
   getChats: protectedProcedure.query(async ({ ctx }) => {
+
     return ctx.prisma.chat.findMany({
+      // const chats = await ctx.prisma.chat.findMany({
       where: {
         userId: ctx.session.user.id
       },
@@ -49,6 +53,8 @@ export const chatRouter = router({
       },
       orderBy: { updatedAt: "desc" },
     });
+    // console.log("chats", chats)
+    // return chats
   }),
 
   // 3. Get messages of a chat
@@ -69,10 +75,12 @@ export const chatRouter = router({
         throw new Error("Not authenticated");
       }
 
+      // Return messages in chronological order (old -> new)
       return ctx.prisma.message.findMany({
-        // where: { sessionId: input.chatId },
-        where: { sessionId: ctx.session.user.id },
-        orderBy: { createdAt: "desc" },
+        where: { sessionId: input.chatId },
+        // where: { sessionId: ctx.session.user.id },
+        // orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: "asc" },
         skip: input.skip,
         take: input.take,
       });
@@ -81,7 +89,8 @@ export const chatRouter = router({
   deleteChat: protectedProcedure
     .input(z.object({ chatId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.prisma.chat.delete({
+      // delete only if belongs to user
+      await ctx.prisma.chat.deleteMany({
         where: { id: input.chatId, userId: ctx.session.user.id },
       })
       return { success: true }
@@ -94,14 +103,18 @@ export const chatRouter = router({
       z.object({
         chatId: z.string(),
         content: z.string().min(1),
+        role: z.enum(['user', 'assistant'])
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.session?.user?.id) throw new Error("Not authenticated");
+
       // save user message
       const userMsg = await ctx.prisma.message.create({
         data: {
           sessionId: input.chatId,
-          sender: "user",
+          // sender: "user",       
+          sender: input.role === "assistant" ? "ai" : "user",
           content: input.content,
         },
       });
@@ -153,9 +166,9 @@ export const chatRouter = router({
       User: ${input.content}
     `;
 
-      const result = await model.generateContent(prompt);
+      // const result = await model.generateContent(prompt);
 
-      const reply = result.response.text() ?? "Sorry, I couldn’t generate a response.";
+      // const reply = result.response.text() ?? "Sorry, I couldn’t generate a response.";
 
       // const reply =
       //   aiResponse.choices[0]?.message?.content ??
@@ -179,13 +192,16 @@ export const chatRouter = router({
       } catch (err) {
         console.error("Gemini error:", err);
         aiReply = "Something went wrong while generating advice.";
+        console.error("Gemini error:", err);
       }
 
       const aiMsg = await ctx.prisma.message.create({
         data: {
           sessionId: input.chatId,
           sender: "ai",
-          content: reply,
+          // content: reply,
+          content: aiReply,
+
         },
       });
 
@@ -217,5 +233,28 @@ export const chatRouter = router({
         ee.on("newMessage", onMessage);
         return () => ee.off("newMessage", onMessage);
       });
-    })
+    }),
+
+  onMessageAdded: publicProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .subscription(({ input }) => {
+      return observable<Message>((emit) => {
+        // const handler = (message: Message) => {
+        const handler = (pair: { chatId: string; user: Message; ai: Message }) => {
+          // if (message.sessionId === input.sessionId) {
+          if (pair.chatId === input.sessionId) {
+            // emit.next(message);
+            emit.next(pair.ai);
+
+          }
+        };
+
+        // messageEmitter.on('add', handler); // use an EventEmitter for pushing msgs
+        ee.on("messageAdded", handler);
+        return () => {
+          // messageEmitter.off('add', handler);
+          ee.off("messageAdded", handler);
+        };
+      });
+    }),
 });

@@ -31,3 +31,5 @@ export async function createContext({ req, res }: CreateNextContextOptions
 // export type Context = ReturnType<typeof createContext> extends Promise<infer T> ? T : never;     // That’s basically reimplementing Awaited by hand . Both do the same job, but Awaited is cleaner and built into modern TypeScript.
 // export type Context = ReturnType<typeof createContext>;
 export type Context = Awaited<typeof createContext> ;    // Instead of manually writing the conditional type, you can just use Awaited (built-in TS utility): This unwraps the promise and gives you the actual shape.This unwraps the promise and gives you the actual shape.
+
+

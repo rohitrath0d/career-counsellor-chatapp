@@ -355,37 +355,37 @@ export default function ChatInterface() {
   const { data: chats, refetch: refetchChats } = trpc.chat.getChats.useQuery()
 
   // Fetch messages for selected chat
-  const { data: messages = [] } = trpc.chat.getMessages.useQuery(
-    { chatId: selectedChatId! },
-    { enabled: !!selectedChatId }
-  )
+  // const { data: messages = [] } = trpc.chat.getMessages.useQuery(
+  //   { chatId: selectedChatId! },
+  //   { enabled: !!selectedChatId }
+  // )
+
+  const startChat = trpc.chat.startChat.useMutation({
+    onSuccess: (chat) => {
+      setSelectedChatId(chat.id);
+      refetchChats();
+    },
+  });
 
   // Subscribe to new messages
   // trpc.chat.onNewMessage.useSubscription(
-  trpc.chat.newMessages.useSubscription(
-    { chatId: selectedChatId! },
-    {
-      enabled: !!selectedChatId,
-      onData: () => {
-        // Just invalidate cache so TanStack Query refetches
-        // (or we could manually append, but invalidate is simpler)
-        if (selectedChatId) {
-          // trpc.chat.getMessages.invalidate({ chatId: selectedChatId })
-          utils.chat.getMessages.invalidate({ chatId: selectedChatId })
-        }
-        refetchChats()
-      },
-    }
-  )
+  // trpc.chat.newMessages.useSubscription(
+  //   { chatId: selectedChatId! },
+  //   {
+  //     enabled: !!selectedChatId,
+  //     onData: () => {
+  //       // Just invalidate cache so TanStack Query refetches
+  //       // (or we could manually append, but invalidate is simpler)
+  //       if (selectedChatId) {
+  //         // trpc.chat.getMessages.invalidate({ chatId: selectedChatId })
+  //         utils.chat.getMessages.invalidate({ chatId: selectedChatId })
+  //       }
+  //       refetchChats()
+  //     },
+  //   }
+  // )
 
-  // Mutation to start a new chat
-  const startChat = trpc.chat.startChat.useMutation({
-    // onSuccess: (chat: Chat) => {
-    onSuccess: (chat: Chat) => {
-      setSelectedChatId(chat.id)
-      refetchChats()
-    },
-  })
+
 
   return (
     <div className="flex h-full w-full">
@@ -414,7 +414,8 @@ export default function ChatInterface() {
       </div>
 
       {/* Chat area */}
-      <div className="flex-1 flex flex-col">
+      {/* <div className="flex-1 flex flex-col"> */}
+      <main className="flex-1 flex flex-col">
         {selectedChatId ? (
           <>
             <ChatMessages chatId={selectedChatId} />
@@ -427,7 +428,8 @@ export default function ChatInterface() {
             Select a chat or start a new one
           </div>
         )}
-      </div>
+        {/* </div> */}
+      </main>
     </div>
   )
 }

@@ -254,7 +254,7 @@
 // }
 
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ScrollArea } from "../ui/scroll-area"
 import { Avatar, AvatarFallback } from "../ui/avatar"
 import { Bot, User, Sparkles } from "lucide-react"
@@ -266,16 +266,27 @@ interface ChatMessagesProps {
 }
 
 export function ChatMessages({ chatId }: ChatMessagesProps) {
+  // const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  // const [messageInput, setMessageInput] = useState("");
+
+
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const utils = trpc.useUtils()
 
 
   // Initial messages
+  // const { data: messages = [] } = trpc.chat.getMessages.useQuery(
+  //   { chatId, skip: 0, take: 50 },
+  //   { enabled: !!chatId }
+  // )
+
+  // fetch users chats
   const { data: messages = [] } = trpc.chat.getMessages.useQuery(
     { chatId, skip: 0, take: 50 },
     { enabled: !!chatId }
-  )
+  );
+
 
   // Subscription for new messages
   // trpc.chat.onNewMessage.useSubscription(
@@ -284,8 +295,12 @@ export function ChatMessages({ chatId }: ChatMessagesProps) {
     {
       enabled: !!chatId,
       onData: () => {
+        // onData: (data) => {
         // trpc.chat.getMessages.invalidate({ chatId })
         utils.chat.getMessages.invalidate({ chatId })
+        // refetchChats()
+        // if (refetchChats) refetchChats();
+
       },
     }
   )
@@ -294,6 +309,10 @@ export function ChatMessages({ chatId }: ChatMessagesProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  if (!chatId) {
+    return <div className="flex-1 flex items-center justify-center">Select a chat</div>;
+  }
 
   if (messages.length === 0) {
     return (

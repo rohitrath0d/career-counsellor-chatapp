@@ -200,7 +200,8 @@ export default function HomePage() {
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Join thousands of professionals who have discovered their true potential with AI-powered career guidance.
           </p>
-          <Link href="/chat">
+          {/* <Link href="/chat"> */}
+          <Link href="/auth">
             <Button className="gradient-button-cta inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-lg font-medium transition-all disabled:pointer-events-none disabled:opacity-50 px-12 py-6 shadow-lg hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2">
               <MessageCircle className="mr-2 w-5 h-5" />
               Start Chatting Now

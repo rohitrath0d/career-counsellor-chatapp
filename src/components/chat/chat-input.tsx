@@ -5,14 +5,24 @@ import { Send, Loader2 } from "lucide-react"
 import { trpc } from "@/utils/trpc"
 
 interface ChatInputProps {
-  chatId: string
+  chatId: string,
+  disabled?: boolean
 }
 
-export function ChatInput({ chatId }: ChatInputProps) {
+export function ChatInput({ chatId, disabled }: ChatInputProps) {
   const [message, setMessage] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const utils = trpc.useContext();
 
-  const sendMessage = trpc.chat.sendMessage.useMutation()
+
+  const sendMessage = trpc.chat.sendMessage.useMutation({
+    onSuccess: async () => {
+      setMessage("")
+      // Invalidate messages so UI refetches (subscription also helps)
+      await utils.chat.getMessages.invalidate({ chatId });
+      await utils.chat.getChats.invalidate(); // update sidebar
+    }
+  })
 
   const handleSend = async () => {
     const trimmedMessage = message.trim()
@@ -26,6 +36,7 @@ export function ChatInput({ chatId }: ChatInputProps) {
       await sendMessage.mutateAsync({
         chatId,
         content: trimmedMessage,
+        role: "user",
       })
 
       setMessage("")
@@ -61,7 +72,7 @@ export function ChatInput({ chatId }: ChatInputProps) {
           onKeyDown={handleKeyDown}
           placeholder="Ask me about your career goals, job search, skills development..."
           // disabled={sendMessage.isLoading}
-          disabled={sendMessage.isPending}
+          disabled={disabled || sendMessage.isPending}
           className="min-h-[48px] max-h-[120px] resize-none bg-background border-input focus:ring-2 focus:ring-ring transition-all duration-200 rounded-xl"
           rows={1}
         />

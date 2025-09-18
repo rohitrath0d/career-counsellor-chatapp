@@ -211,7 +211,9 @@ export function ChatSidebar({ currentChatId, onSelectChat, onCloseSidebar }: Cha
   const [chatToDelete, setChatToDelete] = useState<string | null>(null)
 
   // Fetch all chats
-  const { data: chats = [], refetch } = trpc.chat.getChats.useQuery()
+  const { data: chats = [], refetch, isLoading } = trpc.chat.getChats.useQuery()
+  console.log("chats from tRPC", chats)
+
 
   // Mutation: start new chat
   const startChat = trpc.chat.startChat.useMutation({
@@ -241,6 +243,10 @@ export function ChatSidebar({ currentChatId, onSelectChat, onCloseSidebar }: Cha
   const confirmDelete = () => {
     if (chatToDelete) deleteChat?.mutate({ chatId: chatToDelete })
   }
+
+  if (isLoading) return <p>Loading...</p>
+  if (!chats?.length) return <p>No chats yet</p>
+
 
   return (
     <div className="h-full bg-sidebar/95 backdrop-blur-sm border-r border-sidebar-border flex flex-col">
