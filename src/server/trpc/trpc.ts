@@ -1,5 +1,6 @@
 import { initTRPC } from "@trpc/server";
 import type { Context } from "../context/context";
+import { observable } from "@trpc/server/observable";
 
 
 // const t = initTRPC.create();
@@ -25,3 +26,8 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     },
   });
 });
+
+// Event emitter for realtime messages - sockets
+import { EventEmitter } from "events";
+export const ee = new EventEmitter();
+export {observable};

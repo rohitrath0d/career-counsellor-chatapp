@@ -24,7 +24,8 @@
     },
     "types": [
       // "next-auth"
-      "next"
+      "next",
+      "node"
     ],
     "typeRoots": [
       "./src/types",
