@@ -3,15 +3,21 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { ReactNode, useState } from "react";
 import { trpc } from "./trpc";
+import superjson from "superjson"
 
 export function TRPCProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
   const [trpcClient] = useState(() =>
     trpc.createClient({
+      // on tRPC v10.45+ (or higher). In these versions the transformer no longer goes on createClient, it must be passed directly into the link (like httpBatchLink).
+      // transformer: superjson,   //required for matching backend     
       links: [
         httpBatchLink({
-          url: "/api/trpc", //  matches API route: pages/api/trpc/[trpc].ts
-
+          url: "/api/trpc",       //  matches API route: pages/api/trpc/[trpc].ts
+          
+          // Before: transformer was at the top level of createClient.
+          // Now: transformer must be passed into the specific link (httpBatchLink, wsLink, etc.).
+          transformer: superjson,   // required for matching backend
         }),
       ],
     })

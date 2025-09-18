@@ -41,7 +41,12 @@ export const chatRouter = router({
   // 2. Get all chats of logged-in user
   getChats: protectedProcedure.query(async ({ ctx }) => {
     return ctx.prisma.chat.findMany({
-      where: { userId: ctx.session.user.id },
+      where: {
+        userId: ctx.session.user.id
+      },
+      include: {
+        messages: true, // <-- this fixes it
+      },
       orderBy: { updatedAt: "desc" },
     });
   }),
@@ -60,12 +65,26 @@ export const chatRouter = router({
   getMessages: protectedProcedure
     .input(z.object({ chatId: z.string(), skip: z.number().default(0), take: z.number().default(50) }))
     .query(async ({ ctx, input }) => {
+      if (!ctx.session?.user?.id) {
+        throw new Error("Not authenticated");
+      }
+
       return ctx.prisma.message.findMany({
-        where: { sessionId: input.chatId },
-        orderBy: { createdAt: "asc" },
+        // where: { sessionId: input.chatId },
+        where: { sessionId: ctx.session.user.id },
+        orderBy: { createdAt: "desc" },
         skip: input.skip,
         take: input.take,
       });
+    }),
+
+  deleteChat: protectedProcedure
+    .input(z.object({ chatId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.chat.delete({
+        where: { id: input.chatId, userId: ctx.session.user.id },
+      })
+      return { success: true }
     }),
 
 

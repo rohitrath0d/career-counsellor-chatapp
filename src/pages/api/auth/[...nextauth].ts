@@ -66,7 +66,7 @@ export const authOptions: NextAuthOptions =
             id: existingUser.id,
             email: existingUser.email,
             name: existingUser.name,
-            password: existingUser.password,
+            // password: existingUser.password,
           };
         } else {
           // SIGNUP flow
@@ -87,7 +87,7 @@ export const authOptions: NextAuthOptions =
             id: newUser.id,
             email: newUser.email,
             name: newUser.name,
-            password: newUser.password,
+            // password: newUser.password,
           };
         }
       },
@@ -99,25 +99,43 @@ export const authOptions: NextAuthOptions =
   },
 
   session: {
-    // strategy: "jwt",
-    strategy: "database"       // using DB sessions since i have PrismaAdapter
+    strategy: "jwt",
+    // strategy: "database"       // using DB sessions since i have PrismaAdapter
   },
 
   callbacks: {
-    // async jwt({ token, user }) {
-    //   if (user) token.id = user.id;
-    //   return token;
-    // },
-    // async session({ session, token }) {
-    async session({ session, user }) {
-      // if (token) session.user.id = token.id as string;
-      if (session.user) {
-        // session.user.id = token.id as string;
-        session.user.id = user.id
+    async jwt({ token, user }) {
+      // if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id
+        token.email = user.email
+        token.name = user.name
       }
+      return token;
+    },
+    // async session({ session, token }) {
+    async session({ session, token }) {
+      // if (token) session.user.id = token.id as string;
+      // attach token or user info to session
+      if (token && session.user) {
+        // session.user = {
+        //   id: token.sub!,
+        //   email: token.email!,
+        //   name: token.name!,
+        // }
+        session.user.id = token.id as string
+        session.user.email = token.email as string
+        session.user.name = token.name
+      }
+      // if (session.user) {
+      //   // session.user.id = token.id as string;
+      //   session.user.id = user.id
+      // }
+      console.log("session data", session)
       return session;
     },
   },
+  secret: process.env.NEXTAUTH_SECRET,
 }
 // );
 

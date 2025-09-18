@@ -9,6 +9,9 @@ import { FcGoogle } from "react-icons/fc";
 // import Lottie from "react-lottie-player";
 import LoginAnimation from "@/components/animations/LoginAnimation"; // put a JSON Lottie file here
 import { trpc } from "@/utils/trpc";
+import { useRouter } from "next/router";
+
+
 
 type AuthForm = {
   email: string;
@@ -21,6 +24,8 @@ type AuthForm = {
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   // const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
 
   const form = useForm<AuthForm>({
     defaultValues: { email: "", password: "", name: "" },
@@ -28,19 +33,22 @@ export default function AuthPage() {
 
 
   // tRPC mutations
-  const loginMutation = trpc.user.login.useMutation({
-    onSuccess: (user) => {
-      toast.success(`Welcome back, ${user.name}`);
-      localStorage.setItem("user", JSON.stringify(user));
-      window.location.href = "/";
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  // const loginMutation = trpc.user.login.useMutation({
+  //   onSuccess: (user) => {
+  //     toast.success(`Welcome back, ${user.name}`);
+  //     localStorage.setItem("user", JSON.stringify(user));
+  //     // window.location.href = "/";
+  //     // window.location.href = "/chat";
+  //     router.push("/chat")
+  //   },
+  //   onError: (err) => toast.error(err.message),
+  // });
 
   const signupMutation = trpc.user.signup.useMutation({
     onSuccess: (user) => {
       toast.success(`Account created for ${user.name}`);
       setMode("login");
+      // router.push("/chat"); // <-- optional: auto-login & redirect
     },
     onError: (err) => toast.error(err.message),
   });
@@ -89,16 +97,30 @@ export default function AuthPage() {
   //   }
   // };
 
-  const onSubmit = (data: AuthForm) => {
-    if (mode === "login") loginMutation.mutate({
-      email: data.email,
-      password: data.password
-    });
-    else signupMutation.mutate({
-      email: data.email,
-      password: data.password,
-      name: data.name!
-    });
+  const onSubmit = async (data: AuthForm) => {
+    // if (mode === "login") loginMutation.mutate({
+    //   email: data.email,
+    //   password: data.password
+    // });
+    if (mode === "login") {
+      const res = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+      if (res?.error) toast.error(res.error);
+
+      else router.push("/chat"); // redirect after login
+    }
+    else {
+      await signupMutation.mutateAsync({
+        email: data.email,
+        password: data.password,
+        name: data.name!
+      });
+      setMode("login");
+      toast.success("Account created, please login");
+    }
   };
 
   return (
@@ -118,8 +140,8 @@ export default function AuthPage() {
         {/* Right - Form */}
         <CardContent className="w-full lg:w-1/2 p-8 flex flex-col justify-center">
           <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">
-            {mode === "login" 
-              ? "Welcome Back" 
+            {mode === "login"
+              ? "Welcome Back"
               : "Create Account"
             }
           </h2>
@@ -153,8 +175,8 @@ export default function AuthPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {mode === "signup" && (
               <div className="space-y-2">
-                <label 
-                  htmlFor="name" 
+                <label
+                  htmlFor="name"
                   className="text-sm font-medium text-gray-700"
                 >
                   Full Name
@@ -183,8 +205,8 @@ export default function AuthPage() {
             </div>
 
             <div className="space-y-2">
-              <label 
-                htmlFor="password" 
+              <label
+                htmlFor="password"
                 className="text-sm font-medium text-gray-700"
               >
                 Password
@@ -202,10 +224,12 @@ export default function AuthPage() {
               type="submit"
               className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white font-medium"
               // disabled={loading}
-              disabled={loginMutation.isPending || signupMutation.isPending}      // and can drop the extra loading state entirely, since useMutation already tracks it automatically.
+              // disabled={loginMutation.isPending || signupMutation.isPending}      // and can drop the extra loading state entirely, since useMutation already tracks it automatically.
+              disabled={signupMutation.isPending || signupMutation.isPending}      // and can drop the extra loading state entirely, since useMutation already tracks it automatically.
             >
               {/* {loading ? "Processing..." : mode === "login" ? "Login" : "Sign Up"} */}
-              {loginMutation.isPending || signupMutation.isPending
+              {/* {loginMutation.isPending || signupMutation.isPending */}
+              {signupMutation.isPending || signupMutation.isPending
                 ? "Processing..."
                 : mode === "login"
                   ? "Login"

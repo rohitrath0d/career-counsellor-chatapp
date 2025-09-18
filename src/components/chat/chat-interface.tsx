@@ -337,7 +337,7 @@
 // }
 
 
-"use client"
+// "use client"
 
 import { useState } from "react"
 import { trpc } from "@/utils/trpc"
@@ -346,8 +346,10 @@ import { ChatInput } from "./chat-input"
 import { Button } from "../ui/button"
 import type { Chat } from "@prisma/client"
 
+
 export default function ChatInterface() {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const utils = trpc.useUtils()
 
   // Fetch user's chats
   const { data: chats, refetch: refetchChats } = trpc.chat.getChats.useQuery()
@@ -359,7 +361,8 @@ export default function ChatInterface() {
   )
 
   // Subscribe to new messages
-  trpc.chat.onNewMessage.useSubscription(
+  // trpc.chat.onNewMessage.useSubscription(
+  trpc.chat.newMessages.useSubscription(
     { chatId: selectedChatId! },
     {
       enabled: !!selectedChatId,
@@ -367,7 +370,8 @@ export default function ChatInterface() {
         // Just invalidate cache so TanStack Query refetches
         // (or we could manually append, but invalidate is simpler)
         if (selectedChatId) {
-          trpc.chat.getMessages.invalidate({ chatId: selectedChatId })
+          // trpc.chat.getMessages.invalidate({ chatId: selectedChatId })
+          utils.chat.getMessages.invalidate({ chatId: selectedChatId })
         }
         refetchChats()
       },
@@ -376,6 +380,7 @@ export default function ChatInterface() {
 
   // Mutation to start a new chat
   const startChat = trpc.chat.startChat.useMutation({
+    // onSuccess: (chat: Chat) => {
     onSuccess: (chat: Chat) => {
       setSelectedChatId(chat.id)
       refetchChats()
@@ -397,11 +402,10 @@ export default function ChatInterface() {
             <button
               key={chat.id}
               onClick={() => setSelectedChatId(chat.id)}
-              className={`block w-full text-left p-2 rounded-lg ${
-                chat.id === selectedChatId
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted"
-              }`}
+              className={`block w-full text-left p-2 rounded-lg ${chat.id === selectedChatId
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-muted"
+                }`}
             >
               {chat.title}
             </button>

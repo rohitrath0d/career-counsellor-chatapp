@@ -16,7 +16,11 @@ export function ChatInput({ chatId }: ChatInputProps) {
 
   const handleSend = async () => {
     const trimmedMessage = message.trim()
-    if (!trimmedMessage || sendMessage.isLoading) return
+    // if (!trimmedMessage || sendMessage.isLoading) return
+
+    // sendMessage.isLoading error in ChatInput
+    // useMutation() in tRPC v10 returns an object with isPending, not isLoading
+    if (!trimmedMessage || sendMessage.isPending) return
 
     try {
       await sendMessage.mutateAsync({
@@ -56,18 +60,21 @@ export function ChatInput({ chatId }: ChatInputProps) {
           onChange={handleTextareaChange}
           onKeyDown={handleKeyDown}
           placeholder="Ask me about your career goals, job search, skills development..."
-          disabled={sendMessage.isLoading}
+          // disabled={sendMessage.isLoading}
+          disabled={sendMessage.isPending}
           className="min-h-[48px] max-h-[120px] resize-none bg-background border-input focus:ring-2 focus:ring-ring transition-all duration-200 rounded-xl"
           rows={1}
         />
       </div>
       <Button
         onClick={handleSend}
-        disabled={!message.trim() || sendMessage.isLoading}
+        // disabled={!message.trim() || sendMessage.isLoading}
+        disabled={!message.trim() || sendMessage.isPending}
         size="sm"
         className="h-12 px-4 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground rounded-xl transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
       >
-        {sendMessage.isLoading ? (
+        {/* {sendMessage.isLoading ? ( */}
+        {sendMessage.isPending ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <Send className="h-4 w-4" />

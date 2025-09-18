@@ -1,12 +1,20 @@
 import { initTRPC } from "@trpc/server";
 import type { Context } from "../context/context";
 import { observable } from "@trpc/server/observable";
+import superjson from "superjson"
 
 
 // const t = initTRPC.create();
 
 // creating trpc connection with context
-const t = initTRPC.context<Context>().create();
+// const t = initTRPC.context<Context>().create();
+// add superjson as transformer to tRPC config so Dates are preserved:
+const t = initTRPC
+  .context<Context>()
+  .create({
+    transformer: superjson,
+});
+
 
 export const router = t.router;
 

@@ -268,6 +268,8 @@ interface ChatMessagesProps {
 export function ChatMessages({ chatId }: ChatMessagesProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const utils = trpc.useUtils()
+
 
   // Initial messages
   const { data: messages = [] } = trpc.chat.getMessages.useQuery(
@@ -276,12 +278,14 @@ export function ChatMessages({ chatId }: ChatMessagesProps) {
   )
 
   // Subscription for new messages
-  trpc.chat.onNewMessage.useSubscription(
+  // trpc.chat.onNewMessage.useSubscription(
+  trpc.chat.newMessages.useSubscription(
     { chatId },
     {
       enabled: !!chatId,
       onData: () => {
-        trpc.chat.getMessages.invalidate({ chatId })
+        // trpc.chat.getMessages.invalidate({ chatId })
+        utils.chat.getMessages.invalidate({ chatId })
       },
     }
   )
@@ -301,7 +305,8 @@ export function ChatMessages({ chatId }: ChatMessagesProps) {
           </div>
           <h3 className="text-2xl font-bold mb-3">Welcome to Career Counselor AI</h3>
           <p className="text-muted-foreground mb-8 leading-relaxed">
-            I'm here to help you navigate your career journey with personalized guidance.
+            {/* I'm here to help you navigate your career journey with personalized guidance. */}
+            I&aposm here to help you navigate your career journey with personalized guidance.
           </p>
         </div>
       </div>

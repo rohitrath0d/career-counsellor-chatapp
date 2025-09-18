@@ -6,9 +6,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../pages/api/auth/[...nextauth]"; // your [...nextauth].ts options
 // import NextAuth from "../../pages/api/auth/[...nextauth]"; // your [...nextauth].ts options
 import { NextApiRequest, NextApiResponse } from "next";
+import { CreateNextContextOptions } from "@trpc/server/adapters/next";
 
 // export async function createContext({ req, res }: any) {
-export async function createContext({ req, res }: { req: NextApiRequest; res: NextApiResponse }) {
+// export async function createContext({ req, res }: { req: NextApiRequest; res: NextApiResponse }) {
+export async function createContext({ req, res }: CreateNextContextOptions
+) {
 // export async function createContext({ req, res }: { req: any; res: any }) {
 
   const session = await getServerSession(req, res, authOptions);
