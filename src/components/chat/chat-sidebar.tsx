@@ -182,7 +182,8 @@
 // "use client"
 
 import { useState } from "react"
-import { trpc } from "@/lib/trpc"
+// import { trpc } from "@/lib/trpc"
+import { trpc } from "@/utils/trpc"
 import { Button } from "../ui/button"
 import { ScrollArea } from "../ui/scroll-area"
 import { Plus, MessageSquare, X, Trash2, MoreHorizontal } from "lucide-react"

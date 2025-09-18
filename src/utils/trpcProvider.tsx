@@ -1,3 +1,4 @@
+// provider is needed for the frontend to talk to your backend chatRouter in real time.
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { ReactNode, useState } from "react";
