@@ -48,6 +48,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/b
 - [Tanstack query/React query official docs](https://tanstack.com/query/latest/docs/framework/react/examples/simple)
 - [Auth.js prisma setup](https://authjs.dev/getting-started/adapters/prisma)
 - [React-hook-form docs](https://react-hook-form.com/get-started)
-
+- [Web sockets docs](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
 
 - [google-docs-reference](https://docs.google.com/document/d/1qHvs5wUBzPC1WYBQaxlmUiO66J71z-j_p0XrE7mnvIk/edit?tab=t.0)

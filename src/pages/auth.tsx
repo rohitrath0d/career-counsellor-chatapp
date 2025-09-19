@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { signIn } from "next-auth/react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+// import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "../components/ui/card"
+// import { Input } from "@/components/ui/input";
+import { Input } from "../components/ui/input"
+// import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button"
 import { toast } from "sonner";
 import { FcGoogle } from "react-icons/fc";
 // import Lottie from "react-lottie-player";
-import LoginAnimation from "@/components/animations/LoginAnimation"; // put a JSON Lottie file here
-import { trpc } from "@/utils/trpc";
+// import LoginAnimation from "@/components/animations/LoginAnimation"; // put a JSON Lottie file here
+import LoginAnimation from "../components/animations/LoginAnimation";
+// import { trpc } from "@/utils/trpc";
+import { trpc } from "../utils/trpc";
 import { useRouter } from "next/router";
 
 

@@ -2,12 +2,14 @@ import React, { useState, useRef, type KeyboardEvent } from "react"
 import { Button } from "../ui/button"
 import { Textarea } from "../ui/textarea"
 import { Send, Loader2 } from "lucide-react"
-import { trpc } from "@/utils/trpc"
+// import { trpc } from "@/utils/trpc"
+import { trpc } from "../../utils/trpc"
 
 interface ChatInputProps {
   chatId: string,
   disabled?: boolean
 }
+
 
 export function ChatInput({ chatId, disabled }: ChatInputProps) {
   const [message, setMessage] = useState("")

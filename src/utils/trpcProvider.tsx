@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, createWSClient, wsLink } from "@trpc/client";
 import { ReactNode, useState } from "react";
 import { trpc } from "./trpc";
-import superjson from "superjson"
+// import superjson from "superjson"
 
 export function TRPCProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -26,13 +26,13 @@ export function TRPCProvider({ children }: { children: ReactNode }) {
           ? httpBatchLink({
             // url: "http://localhost:3000/api/trpc",
             url: '/api/trpc',
-            transformer: superjson,
+            // transformer: superjson,
           })
           : wsLink({
             client: createWSClient({
               url: "ws://localhost:3001", // your WS server
             }),
-            transformer: superjson,
+            // transformer: superjson,
 
           }),
       ],

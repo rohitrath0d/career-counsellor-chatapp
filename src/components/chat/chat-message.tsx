@@ -258,8 +258,9 @@ import { useEffect, useRef, useState } from "react"
 import { ScrollArea } from "../ui/scroll-area"
 import { Avatar, AvatarFallback } from "../ui/avatar"
 import { Bot, User, Sparkles } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { trpc } from "@/utils/trpc"
+import { cn } from "../../lib/utils"
+import { trpc } from "../../utils/trpc"
+import { Message } from "@prisma/client"
 
 interface ChatMessagesProps {
   chatId: string
@@ -267,8 +268,7 @@ interface ChatMessagesProps {
 
 export function ChatMessages({ chatId }: ChatMessagesProps) {
   // const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
-  // const [messageInput, setMessageInput] = useState("");
-
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -282,11 +282,20 @@ export function ChatMessages({ chatId }: ChatMessagesProps) {
   // )
 
   // fetch users chats
-  const { data: messages = [] } = trpc.chat.getMessages.useQuery(
+  const { data: initialMessages = [] } = trpc.chat.getMessages.useQuery(
     { chatId, skip: 0, take: 50 },
-    { enabled: !!chatId }
+    {
+      enabled: !!chatId,
+      //  onSuccess: setMessages 
+    }
   );
 
+  // Update state when data changes
+  useEffect(() => {
+    if (initialMessages.length) {
+      setMessages(initialMessages);
+    }
+  }, [initialMessages]);
 
   // Subscription for new messages
   // trpc.chat.onNewMessage.useSubscription(
@@ -294,12 +303,17 @@ export function ChatMessages({ chatId }: ChatMessagesProps) {
     { chatId },
     {
       enabled: !!chatId,
-      onData: () => {
+      onData: ({ user, ai }) => {
         // onData: (data) => {
         // trpc.chat.getMessages.invalidate({ chatId })
-        utils.chat.getMessages.invalidate({ chatId })
+        // utils.chat.getMessages.invalidate({ chatId })
         // refetchChats()
         // if (refetchChats) refetchChats();
+        // setMessages((prev) => [...prev, user, ai]);     //  This avoids calling utils.chat.getMessages.invalidate every time, which can save unnecessary queries.
+        setMessages((prev) => {
+          const newMessages = [user, ai].filter(m => !prev.some(msg => msg.id === m.id));
+          return [...prev, ...newMessages].slice(-200);
+        });
 
       },
     }

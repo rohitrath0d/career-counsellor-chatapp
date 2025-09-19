@@ -340,7 +340,8 @@
 // "use client"
 
 import { useState } from "react"
-import { trpc } from "@/utils/trpc"
+// import { trpc } from "@/utils/trpc"
+import { trpc } from "../../utils/trpc"
 import { ChatMessages } from "./chat-message"
 import { ChatInput } from "./chat-input"
 import { Button } from "../ui/button"

@@ -3,9 +3,12 @@ import { SessionProvider } from "next-auth/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
-import "@/styles/globals.css";
-import { TRPCProvider } from "@/utils/trpcProvider";
-import { ThemeProvider } from "@/components/theme/theme-provider";
+// import "@/styles/globals.css";
+import "../styles/globals.css"
+// import { TRPCProvider } from "@/utils/trpcProvider";
+import { TRPCProvider } from "../utils/trpcProvider"
+// import { ThemeProvider } from "@/components/theme/theme-provider";
+import { ThemeProvider } from "../components/theme/theme-provider"
 
 
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
