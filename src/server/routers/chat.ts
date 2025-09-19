@@ -103,7 +103,7 @@ export const chatRouter = router({
       z.object({
         chatId: z.string(),
         content: z.string().min(1),
-        role: z.enum(['user', 'assistant'])
+        role: z.enum(['user', 'assistant'])   // this must match frontened  
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -113,8 +113,8 @@ export const chatRouter = router({
       const userMsg = await ctx.prisma.message.create({
         data: {
           sessionId: input.chatId,
-          // sender: "user",       
-          sender: input.role === "assistant" ? "ai" : "user",
+          sender: "user",
+          // sender: input.role === "assistant" ? "ai" : "user",
           content: input.content,
         },
       });
@@ -138,10 +138,17 @@ export const chatRouter = router({
       //   content: m.content,
       // }));
 
-      const aiContext = pastMessages
-        .reverse() // keep chronological order
-        .map((m) => `${m.sender}: ${m.content}`)
-        .join("\n");
+      // const aiContext = pastMessages
+      //   .reverse() // keep chronological order
+      //   .map((m) => `${m.sender}: ${m.content}`)
+      //   .join("\n");
+
+
+      // Format conversation history for AI
+      const conversationHistory = pastMessages
+        .reverse() // Oldest first
+        .map(msg => `${msg.sender === 'user' ? 'User' : 'AI'}: ${msg.content}`)
+        .join('\n');
 
       // // call AI API
       // const aiResponse = await openai.chat.completions.create({
@@ -160,11 +167,11 @@ export const chatRouter = router({
       //   User: ${input.content}
       // `;
       const prompt = `
-      You are a helpful career counselor.
-      The conversation so far:
-      ${aiContext}
+      You are a helpful career counselor. Be empathetic, practical, and concise in your replies.
+      Conversation history:
+      ${conversationHistory}
       User: ${input.content}
-    `;
+      AI:`;
 
       // const result = await model.generateContent(prompt);
 
@@ -186,15 +193,19 @@ export const chatRouter = router({
       // Call Gemini API
       let aiReply: string;
       try {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
         const result = await model.generateContent(prompt);
-        aiReply = result.response.text() ?? "Sorry, I couldn’t generate a response.";
+        aiReply = result.response.text() ?? "Sorry, I couldn't generate a response at this time. Limit reached. Try again later.";
+
       } catch (err) {
         console.error("Gemini error:", err);
-        aiReply = "Something went wrong while generating advice.";
+        aiReply = "I'm experiencing technical difficulties. Please try again shortly";
         console.error("Gemini error:", err);
       }
 
+      // Save AI response
       const aiMsg = await ctx.prisma.message.create({
         data: {
           sessionId: input.chatId,
@@ -205,15 +216,17 @@ export const chatRouter = router({
         },
       });
 
-      //  Emit new messages via EventEmitter
-      ee.emit("newMessage", { chatId: input.chatId, user: userMsg, ai: aiMsg });
-
-
-
       // update chat timestamp
       await ctx.prisma.chat.update({
         where: { id: input.chatId },
         data: { updatedAt: new Date() },
+      });
+
+      //  Emit new messages via EventEmitter
+      ee.emit("newMessage", { 
+        chatId: input.chatId, 
+        user: userMsg, 
+        ai: aiMsg 
       });
 
       return { user: userMsg, ai: aiMsg };

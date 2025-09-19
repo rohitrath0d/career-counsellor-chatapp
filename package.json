@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack && tsc --watch && tsc --noEmit",
+    "dev:ws": "tsx server/websocket/wsServer.ts",
+    "dev": "next dev --turbopack && tsc --watch && tsc --noEmit && npm run dev:ws",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint"
@@ -26,6 +27,7 @@
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "jsonwebtoken": "^9.0.2",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.544.0",
     "next": "15.5.3",
