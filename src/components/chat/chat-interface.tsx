@@ -339,98 +339,324 @@
 
 // "use client"
 
-import { useState } from "react"
-// import { trpc } from "@/utils/trpc"
-import { trpc } from "../../utils/trpc"
+// import { useState, useEffect } from "react"
+// // import { trpc } from "@/utils/trpc"
+// import { trpc } from "../../utils/trpc"
+// import { ChatMessages } from "./chat-message"
+// import { ChatInput } from "./chat-input"
+// import { ChatSidebar } from "./chat-sidebar"
+// import { Button } from "../ui/button"
+// // import type { Chat } from "@prisma/client"
+// import { Menu, Bot } from "lucide-react"
+
+
+// export interface Message {
+//   id: string
+//   content: string
+//   role: "user" | "assistant"
+//   timestamp: Date
+// }
+
+// export interface ChatSession {
+//   id: string
+//   title: string
+//   messages: Message[]
+//   createdAt: Date
+//   updatedAt: Date
+// }
+
+
+
+
+// export default function ChatInterface() {
+//   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+//   const utils = trpc.useUtils()
+
+//   // Fetch user's chats
+//   const { data: chats, refetch: refetchChats } = trpc.chat.getChats.useQuery()
+
+//   // Fetch messages for selected chat
+//   // const { data: messages = [] } = trpc.chat.getMessages.useQuery(
+//   //   { chatId: selectedChatId! },
+//   //   { enabled: !!selectedChatId }
+//   // )
+
+//   const startChat = trpc.chat.startChat.useMutation({
+//     onSuccess: (chat) => {
+//       setSelectedChatId(chat.id);
+//       refetchChats();
+//     },
+//   });
+
+//   // Subscribe to new messages
+//   // trpc.chat.onNewMessage.useSubscription(
+//   // trpc.chat.newMessages.useSubscription(
+//   //   { chatId: selectedChatId! },
+//   //   {
+//   //     enabled: !!selectedChatId,
+//   //     onData: () => {
+//   //       // Just invalidate cache so TanStack Query refetches
+//   //       // (or we could manually append, but invalidate is simpler)
+//   //       if (selectedChatId) {
+//   //         // trpc.chat.getMessages.invalidate({ chatId: selectedChatId })
+//   //         utils.chat.getMessages.invalidate({ chatId: selectedChatId })
+//   //       }
+//   //       refetchChats()
+//   //     },
+//   //   }
+//   // )
+
+
+
+//   return (
+//     <div className="flex h-full w-full">
+//       {/* Sidebar */}
+//       <div className="w-64 border-r border-border p-4 flex flex-col">
+//         <Button
+//           className="mb-4"
+//           onClick={() => startChat.mutate({ title: "New Career Chat" })}
+//         >
+//           New Chat
+//         </Button>
+//         <div className="flex-1 overflow-y-auto space-y-2">
+//           {chats?.map((chat) => (
+//             <button
+//               key={chat.id}
+//               onClick={() => setSelectedChatId(chat.id)}
+//               className={`block w-full text-left p-2 rounded-lg ${chat.id === selectedChatId
+//                 ? "bg-primary text-primary-foreground"
+//                 : "hover:bg-muted"
+//                 }`}
+//             >
+//               {chat.title}
+//             </button>
+//           ))}
+//         </div>
+//       </div>
+
+//       {/* Chat area */}
+//       {/* <div className="flex-1 flex flex-col"> */}
+//       <main className="flex-1 flex flex-col">
+//         {selectedChatId ? (
+//           <>
+//             <ChatMessages chatId={selectedChatId} />
+//             <div className="p-4">
+//               <ChatInput chatId={selectedChatId} />
+//             </div>
+//           </>
+//         ) : (
+//           <div className="flex-1 flex items-center justify-center text-muted-foreground">
+//             Select a chat or start a new one
+//           </div>
+//         )}
+//         {/* </div> */}
+//       </main>
+//     </div>
+//   )
+// }
+
+
+
+
+
+
+
+
+
+
+// components/chat/chat-interface.tsx
+"use client"
+
+import { useState, useEffect } from "react"
+import { ChatSidebar } from "./chat-sidebar"
 import { ChatMessages } from "./chat-message"
 import { ChatInput } from "./chat-input"
+import { ThemeToggle } from "../theme/theme-toggle"
 import { Button } from "../ui/button"
-import type { Chat } from "@prisma/client"
+import { Menu, Bot } from "lucide-react"
+// import { trpc } from "@/utils/trpc"
+import { trpc } from "../../utils/trpc"
 
+export interface Message {
+  id: string
+  content: string
+  role: "user" | "assistant"
+  timestamp: Date
+}
 
-export default function ChatInterface() {
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
-  const utils = trpc.useUtils()
+export interface ChatSession {
+  id: string
+  title: string
+  messages: Message[]
+  createdAt: Date
+  updatedAt: Date
+}
 
-  // Fetch user's chats
-  const { data: chats, refetch: refetchChats } = trpc.chat.getChats.useQuery()
+export function ChatInterface() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sessions, setSessions] = useState<ChatSession[]>([])
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null)
+  const [isTyping, setIsTyping] = useState(false)
 
-  // Fetch messages for selected chat
-  // const { data: messages = [] } = trpc.chat.getMessages.useQuery(
-  //   { chatId: selectedChatId! },
-  //   { enabled: !!selectedChatId }
-  // )
+  // Fetch user's chats from backend
+  const { data: backendChats = [], refetch: refetchChats } = trpc.chat.getChats.useQuery()
 
+  // Map backend chats to frontend sessions
+  useEffect(() => {
+    if (backendChats.length > 0) {
+      const mappedSessions = backendChats.map(chat => ({
+        id: chat.id,
+        title: chat.title,
+        messages: chat.messages ? chat.messages.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          role: msg.sender as "user" | "assistant",
+          timestamp: new Date(msg.createdAt)
+        })) : [],
+        createdAt: new Date(chat.createdAt),
+        updatedAt: new Date(chat.updatedAt)
+      }));
+
+      setSessions(mappedSessions);
+      if (!currentSession && mappedSessions.length > 0) {
+        setCurrentSession(mappedSessions[0]);
+      }
+    }
+  }, [backendChats, currentSession]);
+
+  // Mutation to start a new chat
   const startChat = trpc.chat.startChat.useMutation({
     onSuccess: (chat) => {
-      setSelectedChatId(chat.id);
+      refetchChats();
+      // Select the new chat
+      const newSession: ChatSession = {
+        id: chat.id,
+        title: chat.title,
+        messages: [],
+        createdAt: new Date(chat.createdAt),
+        updatedAt: new Date(chat.updatedAt)
+      };
+      setSessions(prev => [newSession, ...prev]);
+      setCurrentSession(newSession);
+    },
+  });
+
+  // Mutation to send message
+  const sendMessage = trpc.chat.sendMessage.useMutation({
+    onMutate: () => setIsTyping(true),
+    onSuccess: () => {
+      setIsTyping(false);
+      refetchChats(); // Refresh to get updated messages
+    },
+    onError: () => setIsTyping(false),
+  });
+
+  // Mutation to delete chat
+  const deleteChat = trpc.chat.deleteChat.useMutation({
+    onSuccess: () => {
       refetchChats();
     },
   });
 
-  // Subscribe to new messages
-  // trpc.chat.onNewMessage.useSubscription(
-  // trpc.chat.newMessages.useSubscription(
-  //   { chatId: selectedChatId! },
-  //   {
-  //     enabled: !!selectedChatId,
-  //     onData: () => {
-  //       // Just invalidate cache so TanStack Query refetches
-  //       // (or we could manually append, but invalidate is simpler)
-  //       if (selectedChatId) {
-  //         // trpc.chat.getMessages.invalidate({ chatId: selectedChatId })
-  //         utils.chat.getMessages.invalidate({ chatId: selectedChatId })
-  //       }
-  //       refetchChats()
-  //     },
-  //   }
-  // )
+  const createNewSession = () => {
+    startChat.mutate({ title: "New Career Chat" });
+  }
 
+  const selectSession = (session: ChatSession) => {
+    setCurrentSession(session)
+    setSidebarOpen(false)
+  }
 
+  const handleDeleteSession = (sessionId: string) => {
+    deleteChat.mutate({ chatId: sessionId });
+    if (currentSession?.id === sessionId) {
+      setCurrentSession(sessions.length > 1 ? sessions[0] : null);
+    }
+  }
+
+  const addMessage = (content: string, role: "user" | "assistant") => {
+    if (!currentSession) {
+      // If no session exists, create a new one first
+      startChat.mutate({ 
+        title: content.slice(0, 50) + (content.length > 50 ? "..." : "")
+      });
+      return;
+    }
+
+    if (role === "user") {
+      // Send user message to backend
+      sendMessage.mutate({
+        chatId: currentSession.id,
+        content,
+        role: "user"
+      });
+    }
+  }
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full bg-background">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="w-64 border-r border-border p-4 flex flex-col">
-        <Button
-          className="mb-4"
-          onClick={() => startChat.mutate({ title: "New Career Chat" })}
-        >
-          New Chat
-        </Button>
-        <div className="flex-1 overflow-y-auto space-y-2">
-          {chats?.map((chat) => (
-            <button
-              key={chat.id}
-              onClick={() => setSelectedChatId(chat.id)}
-              className={`block w-full text-left p-2 rounded-lg ${chat.id === selectedChatId
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
-                }`}
-            >
-              {chat.title}
-            </button>
-          ))}
-        </div>
+      <div
+        className={`
+          fixed lg:relative inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
+      >
+        <ChatSidebar
+          sessions={sessions}
+          currentSession={currentSession}
+          onSelectSession={selectSession}
+          onNewSession={createNewSession}
+          onDeleteSession={handleDeleteSession}
+          onClose={() => setSidebarOpen(false)}
+        />
       </div>
 
-      {/* Chat area */}
-      {/* <div className="flex-1 flex flex-col"> */}
-      <main className="flex-1 flex flex-col">
-        {selectedChatId ? (
-          <>
-            <ChatMessages chatId={selectedChatId} />
-            <div className="p-4">
-              <ChatInput chatId={selectedChatId} />
+      {/* Main chat area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="flex items-center justify-between p-4 border-b bg-card/50 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <Bot className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-primary">Career Counselor AI</h1>
+                <p className="text-sm text-muted-foreground">Your AI-powered career guidance assistant</p>
+              </div>
             </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            Select a chat or start a new one
           </div>
-        )}
-        {/* </div> */}
-      </main>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+          </div>
+        </header>
+
+        {/* Chat messages */}
+        <div className="flex-1 overflow-hidden">
+          <ChatMessages 
+            messages={currentSession?.messages || []} 
+            onAddMessage={addMessage} 
+            isTyping={isTyping}
+          />
+        </div>
+
+        {/* Chat input */}
+        <div className="border-t bg-card/50 backdrop-blur-sm p-4">
+          <ChatInput onSendMessage={(content) => addMessage(content, "user")} disabled={isTyping} />
+        </div>
+      </div>
     </div>
   )
 }
