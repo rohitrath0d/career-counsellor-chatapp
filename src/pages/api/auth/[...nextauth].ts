@@ -1,13 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-// import { PrismaClient } from "@prisma/client";
 import { prisma } from "../../../server/prisma/prisma"
 import { compare, hash } from "bcryptjs";
-// import bcrypt from "bcryptjs";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
-// const prisma = new PrismaClient();
 
 // export default NextAuth({
 export const authOptions: NextAuthOptions =
@@ -45,20 +43,6 @@ export const authOptions: NextAuthOptions =
         const existingUser = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
-
-        // if (!user) {
-        //   throw new Error("User not found");
-        // }
-
-
-
-        // const isValid = await compare(credentials.password, user.password);
-        // if (!isValid) {
-        //   throw new Error("Invalid password");
-        // }
-
-        // return { id: user.id, email: user.email, name: user.name };
-
 
         if (existingUser) {
           // LOGIN flow
@@ -125,22 +109,16 @@ export const authOptions: NextAuthOptions =
       // if (token) session.user.id = token.id as string;
       // attach token or user info to session
       if (token && session.user) {
-        // session.user = {
-        //   id: token.sub!,
-        //   email: token.email!,
-        //   name: token.name!,
-        // }
+       
         session.user.id = token.id as string
         session.user.email = token.email as string
         session.user.name = token.name as string
 
-        // if (session.user) {
-        //   // session.user.id = token.id as string;
-        //   session.user.id = user.id
-        // }
+     
 
-        // Optional: also attach an accessToken if you want
-        (session as any).accessToken = token.id; // TS-safe hack if not extending Session type
+        // Optional: also attach an accessToken if want
+        // (session as any).accessToken = token.id; // TS-safe hack if not extending Session type
+        (session).accessToken = token.id; // TS-safe hack if not extending Session type
       }
       console.log("session data", session)
       return session;
