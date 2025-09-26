@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { router, publicProcedure } from "../trpc/trpc";
 import { hash, compare } from "bcryptjs";
-// import { PrismaClient } from "@prisma/client";
 import {prisma} from "../prisma/prisma"
 
 // const prisma = new PrismaClient();
