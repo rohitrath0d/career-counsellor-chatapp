@@ -15,13 +15,16 @@ datasource db {
 }
 
 model User {
-  id    String  @id @default(cuid())
-  email String  @unique
-  name  String?
+  id       String  @id @default(cuid())
+  email    String  @unique
+  name     String?
   // sessions  ChatSession[]
-  password   String? // null if signed up via Google
+  password String? // null if signed up via Google
   // provider   String   @default("credentials") // "credentials" | "google"
   // providerId String? // Google userId
+
+  image         String?
+  emailVerified DateTime?   // NextAuth expects for OAuth
 
   accounts  Account[]
   // sessions  Chat[]
@@ -81,9 +84,9 @@ model Chat {
 model Message {
   id        String   @id @default(cuid())
   // session    ChatSession @relation(fields: [sessionId], references: [id])
-  session   Chat     @relation(fields: [sessionId], references: [id])
+  session   Chat     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId String
-  sender    String    // "user"  | "ai"
+  sender    String // "user"  | "ai"
   content   String
   createdAt DateTime @default(now())
 }

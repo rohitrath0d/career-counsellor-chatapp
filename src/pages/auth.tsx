@@ -161,8 +161,8 @@ export default function AuthPage() {
           <Button
             type="button"
             variant="outline"
-            className="mb-4 w-full flex items-center justify-center gap-2 py-5 border-gray-300 hover:bg-gray-50 transition-colors"
-            onClick={() => signIn("google")}
+            className="mb-4 w-full flex items-center justify-center gap-2 py-5 border-gray-300 hover:bg-gray-300 hover:text-black transition-colors"
+            onClick={() => signIn("google", { callbackUrl: "/chat" })}
           >
             <FcGoogle className="h-5 w-5" />
             Continue with Google
@@ -227,7 +227,7 @@ export default function AuthPage() {
 
             <Button
               type="submit"
-              className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              className="w-full py-5 hover:bg-blue-700 text-white font-medium"
               // disabled={loading}
               // disabled={loginMutation.isPending || signupMutation.isPending}      // and can drop the extra loading state entirely, since useMutation already tracks it automatically.
               disabled={signupMutation.isPending || signupMutation.isPending}      // and can drop the extra loading state entirely, since useMutation already tracks it automatically.
@@ -248,7 +248,7 @@ export default function AuthPage() {
                 <>
                   Don’t have an account?{" "}
                   <Button
-                    className="text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-white font-medium"
                     onClick={() => setMode("signup")}
                   >
                     Sign up
@@ -258,7 +258,7 @@ export default function AuthPage() {
                 <>
                   Already have an account?{" "}
                   <Button
-                    className="text-blue-600 hover:text-blue-800 font-medium"
+                    className=" font-medium"
                     onClick={() => setMode("login")}
                   >
                     Login

@@ -10,6 +10,7 @@ import {
 // import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Message } from "@prisma/client"; // add this at the top
+// import { redisPub, redisSub } from "../redis";
 
 
 // const openai = new OpenAI({
@@ -17,8 +18,8 @@ import type { Message } from "@prisma/client"; // add this at the top
 // });
 
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+// const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+// const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 //  System prompt for consistent AI persona
 const systemPrompt =
@@ -26,17 +27,26 @@ const systemPrompt =
 
 export const chatRouter = router({
   // 1. Start a new chat session
-  // startChat: protectedProcedure
-  startChat: publicProcedure
-    .input(z.object({ title: z.string().optional() }))
+  startChat: protectedProcedure  // since authentication is required for ctx hence protected
+    // startChat: publicProcedure
+    .input(z.object({ title: z.string().optional().default("New Career Chat") }))
     .mutation(async ({ ctx, input }) => {
+
+      console.log("startChat called with input:", input);
+
+      if (!ctx.session?.user?.id) {
+        throw new Error("User must be authenticated to create a chat");
+      }
+
       // const userId = ctx.session.user.id
       const chat = await ctx.prisma.chat.create({
         data: {
-          title: input.title ?? "New Chat",
+          title: input.title,
           userId: ctx.session!.user.id,
         },
       });
+      console.log("Created chat:", chat);
+
       return chat;
     }),
 
@@ -69,7 +79,11 @@ export const chatRouter = router({
 
   // This allows chat UI infinite scroll / lazy loading.
   getMessages: protectedProcedure
-    .input(z.object({ chatId: z.string(), skip: z.number().default(0), take: z.number().default(50) }))
+    .input(z.object({
+      chatId: z.string(),
+      skip: z.number().default(0),
+      take: z.number().default(50)
+    }))
     .query(async ({ ctx, input }) => {
       if (!ctx.session?.user?.id) {
         throw new Error("Not authenticated");
@@ -113,8 +127,8 @@ export const chatRouter = router({
       const userMsg = await ctx.prisma.message.create({
         data: {
           sessionId: input.chatId,
-          sender: "user",
-          // sender: input.role === "assistant" ? "ai" : "user",
+          // sender: "user",
+          sender: input.role === "assistant" ? "ai" : "user",
           content: input.content,
         },
       });
@@ -132,16 +146,6 @@ export const chatRouter = router({
       });
 
 
-      // format for AI
-      // const aiContext = pastMessages.map((m) => ({
-      //   role: m.sender === "user" ? "user" : "assistant",
-      //   content: m.content,
-      // }));
-
-      // const aiContext = pastMessages
-      //   .reverse() // keep chronological order
-      //   .map((m) => `${m.sender}: ${m.content}`)
-      //   .join("\n");
 
 
       // Format conversation history for AI
@@ -150,22 +154,7 @@ export const chatRouter = router({
         .map(msg => `${msg.sender === 'user' ? 'User' : 'AI'}: ${msg.content}`)
         .join('\n');
 
-      // // call AI API
-      // const aiResponse = await openai.chat.completions.create({
-      //   model: "gpt-4o-mini", // or together's free model
-      //   messages: [
-      //     { role: "system", content: "You are a helpful career counselor." },
-      //     ...aiContext,
-      //     { role: "user", content: input.content },
-      //   ],
-      // });
 
-      // const prompt = `
-      //   You are a helpful career counselor.
-      //   The conversation so far:
-      //   ${aiContext.map(m => `${m.role}: ${m.content}`).join("\n")}
-      //   User: ${input.content}
-      // `;
       const prompt = `
       You are a helpful career counselor. Be empathetic, practical, and concise in your replies.
       Conversation history:
@@ -173,28 +162,12 @@ export const chatRouter = router({
       User: ${input.content}
       AI:`;
 
-      // const result = await model.generateContent(prompt);
-
-      // const reply = result.response.text() ?? "Sorry, I couldn’t generate a response.";
-
-      // const reply =
-      //   aiResponse.choices[0]?.message?.content ??
-      //   "Sorry, I couldn’t generate a response.";
-
-      // // save AI reply
-      // const aiMsg = await ctx.prisma.message.create({
-      //   data: {
-      //     sessionId: input.chatId,
-      //     sender: "ai",
-      //     content: reply,
-      //   },
-      // });
-
       // Call Gemini API
       let aiReply: string;
       try {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
 
         const result = await model.generateContent(prompt);
         aiReply = result.response.text() ?? "Sorry, I couldn't generate a response at this time. Limit reached. Try again later.";
@@ -222,12 +195,16 @@ export const chatRouter = router({
         data: { updatedAt: new Date() },
       });
 
-      //  Emit new messages via EventEmitter
-      ee.emit("newMessage", { 
-        chatId: input.chatId, 
-        user: userMsg, 
-        ai: aiMsg 
-      });
+      // //  Emit new messages via EventEmitter
+      // ee.emit("newMessage", {
+      //   chatId: input.chatId,
+      //   user: userMsg,
+      //   ai: aiMsg
+      // });
+
+      // Publish to Redis
+      const payload = JSON.stringify({ user: userMsg, ai: aiMsg });
+      // await redisPub.publish(`chat:${input.chatId}`, payload);
 
       return { user: userMsg, ai: aiMsg };
     }),
@@ -238,36 +215,63 @@ export const chatRouter = router({
     .input(z.object({ chatId: z.string() }))
     .subscription(({ input }) => {
       return observable<{ user: Message; ai: Message }>((emit) => {
-        const onMessage = (data: { chatId: string; user: Message; ai: Message }) => {
-          if (data.chatId === input.chatId) {
-            emit.next({ user: data.user, ai: data.ai });
-          }
-        };
-        ee.on("newMessage", onMessage);
-        return () => ee.off("newMessage", onMessage);
-      });
-    }),
 
-  onMessageAdded: publicProcedure
-    .input(z.object({ sessionId: z.string() }))
-    .subscription(({ input }) => {
-      return observable<Message>((emit) => {
-        // const handler = (message: Message) => {
-        const handler = (pair: { chatId: string; user: Message; ai: Message }) => {
-          // if (message.sessionId === input.sessionId) {
-          if (pair.chatId === input.sessionId) {
-            // emit.next(message);
-            emit.next(pair.ai);
+        //   const onMessage = (data: { chatId: string; user: Message; ai: Message }) => {
+        //     if (data.chatId === input.chatId) {
+        //       emit.next({ user: data.user, ai: data.ai });
+        //     }
+        //   };
+        //   ee.on("newMessage", onMessage);
+        //   return () => ee.off("newMessage", onMessage);
+        // });
 
+        const channel = `chat:${input.chatId}`;
+
+        const handler = (messageStr: string) => {
+          try {
+            const data = JSON.parse(messageStr);
+            emit.next(data);
+          } catch (err) {
+            console.error("Redis parse error:", err);
           }
         };
 
-        // messageEmitter.on('add', handler); // use an EventEmitter for pushing msgs
-        ee.on("messageAdded", handler);
-        return () => {
-          // messageEmitter.off('add', handler);
-          ee.off("messageAdded", handler);
-        };
+        // redisSub.subscribe(channel, (err) => {
+        //   if (err) console.error("Redis subscribe error:", err);
+        // });
+
+        // redisSub.on("message", (msgChannel, messageStr) => {
+        //   if (msgChannel === channel) handler(messageStr);
+        // });
+
+        // return () => {
+        //   redisSub.unsubscribe(channel);
+        // };
       });
     }),
+
+  // onMessageAdded: publicProcedure
+  //   .input(z.object({ sessionId: z.string() }))
+  //   .subscription(({ input }) => {
+  //     return observable<Message>((emit) => {
+  //       // const handler = (message: Message) => {
+  //       const handler = (pair: { chatId: string; user: Message; ai: Message }) => {
+  //         // if (message.sessionId === input.sessionId) {
+  //         if (pair.chatId === input.sessionId) {
+  //           // emit.next(message);
+  //           emit.next(pair.ai);
+
+  //         }
+  //       };
+
+  //       // messageEmitter.on('add', handler); // use an EventEmitter for pushing msgs
+  //       ee.on("messageAdded", handler);
+  //       return () => {
+  //         // messageEmitter.off('add', handler);
+  //         ee.off("messageAdded", handler);
+  //       };
+  //     });
+  //   }),
+
+
 });

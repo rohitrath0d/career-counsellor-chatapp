@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "../prisma/prisma";
 import type { Session } from "next-auth";
 import { verify } from "jsonwebtoken";
@@ -8,14 +9,19 @@ interface CreateWSSContextOptions {
   req?: IncomingMessage & {
     // tRPC WebSocket adapter adds these properties
     connectionParams?: Record<string, unknown>;
+    headers?: Record<string, string>;
   };
   // res?: any;
   // res?: ServerResponse;
   res?: any;
 
-  // connectionParams?: {
-  //   authToken?: string;
-  // };
+  connectionParams?: {
+    authToken?: string;
+  };
+
+  headers?: {
+    authorization?: string;
+  };
 
 }
 
@@ -29,18 +35,35 @@ export async function createWSSContext(opts: CreateWSSContextOptions = {}) {
   try {
     // For WebSocket connections, you might need to handle auth differently
     // This is a simplified version - you might need to adjust based on your auth setup
-    let session: Session | null = null;
+    // let session: Session | null = null;
 
     // If you're using JWT tokens in WebSocket connections
-    const token = opts.req?.headers?.authorization?.replace('Bearer ', '');
+    // const token = opts.req?.headers?.authorization?.replace('Bearer ', '');
+    // const token = opts.req?.connectionParams?.authToken as string | undefined;
+    // const token = opts.req?.headers?.authorization?.replace('Bearer ', '')
+    //   || (opts.connectionParams?.authToken as string)?.replace('Bearer ', '');
+
+
+    const rawToken = opts.connectionParams?.authToken
+    //  || opts.req?.headers?.authorization;
+    console.log("WS ConnectionParams:", opts.connectionParams);
+    // console.log("WS Headers:", opts.req?.headers);
+
+
+    const token = rawToken?.replace("Bearer ", "");
+    console.log("WS context token:", token);
+
+
+    let session: Session | null = null;
     if (token && process.env.NEXTAUTH_SECRET) {
       try {
         const decoded = verify(token, process.env.NEXTAUTH_SECRET) as { id: string };
-        if (decoded) {
+        if (decoded?.id) {
           // Get user from database
           const user = await prisma.user.findUnique({
             where: { id: decoded.id }
           });
+          console.log("Decoded Token:", decoded);
 
           if (user) {
             session = {
@@ -72,5 +95,5 @@ export async function createWSSContext(opts: CreateWSSContextOptions = {}) {
 }
 
 
-// export type WSSContext = Awaited<ReturnType<typeof createWSSContext>>;
-export type WSSContext = ReturnType<typeof createWSSContext>;
+export type WSSContext = Awaited<ReturnType<typeof createWSSContext>>;
+// export type WSSContext = ReturnType<typeof createWSSContext>;

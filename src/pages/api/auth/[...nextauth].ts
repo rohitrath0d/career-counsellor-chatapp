@@ -19,6 +19,13 @@ export const authOptions: NextAuthOptions =
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+        };
+      },
     }),
 
     // Credentials (Email + Password)
@@ -125,14 +132,36 @@ export const authOptions: NextAuthOptions =
         // }
         session.user.id = token.id as string
         session.user.email = token.email as string
-        session.user.name = token.name
+        session.user.name = token.name as string
+
+        // if (session.user) {
+        //   // session.user.id = token.id as string;
+        //   session.user.id = user.id
+        // }
+
+        // Optional: also attach an accessToken if you want
+        (session as any).accessToken = token.id; // TS-safe hack if not extending Session type
       }
-      // if (session.user) {
-      //   // session.user.id = token.id as string;
-      //   session.user.id = user.id
-      // }
       console.log("session data", session)
       return session;
+    },
+    async signIn({ user, account }) {
+      if (!account) return false;
+
+      if (account?.provider === "google") {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+        })
+        if (existingUser) {
+          // link Google account with existing user
+          return true
+        }
+      }
+      // If not existing, PrismaAdapter will create the user
+      return true
+    },
+    async redirect({ url, baseUrl }) {
+      return `${baseUrl}/chat`
     },
   },
   secret: process.env.NEXTAUTH_SECRET,

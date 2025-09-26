@@ -3,9 +3,8 @@
 
 import { Button } from "../ui/button"
 import { ScrollArea } from "../ui/scroll-area"
-import { Plus, MessageSquare, X, Trash2, MoreHorizontal } from "lucide-react"
+import { Plus, MessageSquare, X, Trash2, MoreHorizontal, LogOut } from "lucide-react"
 import { ChatSession } from "./chat-interface"
-// import { cn } from "@/lib/utils"
 import { cn } from "../../lib/utils"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import {
@@ -19,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog"
 import { useState } from "react"
+import { signOut, useSession } from "next-auth/react"
 
 interface ChatSidebarProps {
   sessions: ChatSession[]
@@ -37,8 +37,14 @@ export function ChatSidebar({
   onDeleteSession,
   onClose,
 }: ChatSidebarProps) {
+
+  console.log("ChatSidebar sessions:", sessions);
+  console.log("ChatSidebar currentSession:", currentSession);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+
+  const { data: session } = useSession()
 
   const handleDeleteClick = (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -54,8 +60,23 @@ export function ChatSidebar({
     setDeleteDialogOpen(false)
   }
 
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' })
+    setLogoutDialogOpen(false)
+  }
+
+  const getUserInitials = () => {
+    if (!session?.user?.name && !session?.user?.email) return "U"
+
+    if (session.user.name) {
+      return session.user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    }
+
+    return session.user.email?.[0].toUpperCase() || "U"
+  }
+
   return (
-    <div className="h-full bg-sidebar/95 backdrop-blur-sm border-r border-sidebar-border flex flex-col">
+    <div className="h-full flex flex-col bg-sidebar/95 backdrop-blur-sm border-r border-sidebar-border">
       {/* Header */}
       <div className="p-4 border-b border-sidebar-border/50">
         <div className="flex items-center justify-between mb-4">
@@ -136,12 +157,41 @@ export function ChatSidebar({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border/50">
-        <p className="text-xs text-sidebar-foreground/60 text-center font-medium">AI Career Counselor v1.0</p>
+      <div className="p-4 border-sidebar-border/50">
+        {/* <p className="text-xs text-sidebar-foreground/60 text-center font-medium">AI Career Counselor v1.0</p> */}
+        {/* Footer with user profile */}
+        <div className="p-2 border-t border-sidebar-border/50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center font-bold">
+              {getUserInitials()}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-sidebar-foreground">
+                {session?.user?.name || "User"}
+              </span>
+              <span className="text-xs text-sidebar-foreground/60">
+                {session?.user?.email || "Not signed in"}
+              </span>
+            </div>
+          </div>
+
+
+          {/* Logout Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-36 justify-start gap-2 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 border-sidebar-border/50 rounded-lg mt-2"
+            onClick={() => setLogoutDialogOpen(true)}
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
       </div>
 
+
       {/* Delete confirmation dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      < AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} >
         <AlertDialogContent className="rounded-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
@@ -156,8 +206,32 @@ export function ChatSidebar({
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
+      </AlertDialog >
+
+
+      {/* Logout confirmation dialog */}
+      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <AlertDialogContent className="rounded-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? You&apos;ll need to sign in again to access your chats.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="bg-sidebar-primary hover:bg-sidebar-primary/90 rounded-lg"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
-    </div>
+
+    </div >
   )
 }
 
