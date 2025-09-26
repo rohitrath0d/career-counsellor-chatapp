@@ -3,7 +3,7 @@ import type { AppRouter } from "../server/routers/index"
 import { createWSClient, wsLink, httpBatchLink, splitLink, loggerLink } from '@trpc/client';
 import superjson from 'superjson';
 import { getSession } from "next-auth/react";
-import { getToken } from "next-auth/jwt";
+// import { getToken } from "next-auth/jwt";
 
 
 // async function getEndingLink() {
@@ -67,14 +67,9 @@ if (typeof window === "undefined") {
 
 
 export const trpc = createTRPCReact<AppRouter>({
-  // export const trpc = createTRPCNext<AppRouter>({
-  // ssr: false,
+  
   config({ ctx }) {
-    // config() {
-
-    // const wsClient = typeof window !== 'undefined' ? createWSClient({
-    //   url: 'ws://localhost:3001',
-    // }) : null;
+    
 
     return {
 
@@ -107,28 +102,9 @@ export const trpc = createTRPCReact<AppRouter>({
         // getEndingLink()
       ],
 
-      // queryClientConfig: {
-      //   defaultOptions: {
-      //     queries: {
-      //       refetchOnWindowFocus: false
-      //     }
-      //   }
-      // },
-
       queryClientConfig: {
         defaultOptions: { queries: { staleTime: 60 } }
       },
-
-      // headers: () => {
-      //   if (ctx?.req) {
-      //     // on ssr, forward client's headers to the server
-      //     return {
-      //       ...ctx.req.headers,
-      //       // 'x-ssr': '1',
-      //     };
-      //   }
-      //   return {};
-      // },
 
     }
 

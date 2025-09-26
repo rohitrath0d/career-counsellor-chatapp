@@ -1,7 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { Context } from "../context/context";
 import { observable } from "@trpc/server/observable";
-import superjson from "superjson"
+// import superjson from "superjson"
 
 
 // const t = initTRPC.create();
@@ -22,7 +22,6 @@ export const publicProcedure = t.procedure;
 
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.session?.user) {
-    // throw new Error("Not authenticated");
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
   return next({

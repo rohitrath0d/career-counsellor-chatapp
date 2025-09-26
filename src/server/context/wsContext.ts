@@ -2,7 +2,10 @@
 import { prisma } from "../prisma/prisma";
 import type { Session } from "next-auth";
 import { verify } from "jsonwebtoken";
-import { IncomingMessage, ServerResponse } from "http";
+import { 
+  IncomingMessage, 
+  // ServerResponse 
+} from "http";
 
 
 interface CreateWSSContextOptions {

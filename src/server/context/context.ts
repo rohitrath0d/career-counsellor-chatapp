@@ -5,7 +5,7 @@ import { prisma } from "../prisma/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../pages/api/auth/[...nextauth]"; // your [...nextauth].ts options
 // import NextAuth from "../../pages/api/auth/[...nextauth]"; // your [...nextauth].ts options
-import { NextApiRequest, NextApiResponse } from "next";
+// import { NextApiRequest, NextApiResponse } from "next";
 import { CreateNextContextOptions } from "@trpc/server/adapters/next";
 
 // export async function createContext({ req, res }: any) {

@@ -2,10 +2,9 @@ import { z } from "zod";
 import {
   router,
   protectedProcedure,
-  ee,
-  // publicProcedure ,
+  // ee,
   observable,
-  publicProcedure
+  // publicProcedure
 } from "../trpc/trpc";
 // import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -22,8 +21,8 @@ import type { Message } from "@prisma/client"; // add this at the top
 // const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 //  System prompt for consistent AI persona
-const systemPrompt =
-  "You are a helpful career counselor. Be empathetic, practical, and concise in your replies.";
+// const systemPrompt =
+//   "You are a helpful career counselor. Be empathetic, practical, and concise in your replies.";
 
 export const chatRouter = router({
   // 1. Start a new chat session
@@ -203,7 +202,7 @@ export const chatRouter = router({
       // });
 
       // Publish to Redis
-      const payload = JSON.stringify({ user: userMsg, ai: aiMsg });
+      // const payload = JSON.stringify({ user: userMsg, ai: aiMsg });
       // await redisPub.publish(`chat:${input.chatId}`, payload);
 
       return { user: userMsg, ai: aiMsg };

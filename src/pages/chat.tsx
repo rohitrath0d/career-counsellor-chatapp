@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import { signIn, useSession } from "next-auth/react";
 
 export default function ChatPage() {
-  // console.log("[v0] ChatPage rendering")
 
   const { data: session, status } = useSession();
   const router = useRouter();

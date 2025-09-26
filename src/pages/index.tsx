@@ -2,14 +2,8 @@
 // import { Geist, Geist_Mono } from "next/font/google";
 // "use client"
 
-// import CounsellingAimation from "@/components/animations/CounsellingAnimation"
 import CounsellingAimation from "../components/animations/CounsellingAnimation"
-// import { useRouter } from "next/router";
-// import { useEffect } from "react";
-
-// import { Button } from "@/components/ui/button"
 import { Button } from "../components/ui/button"
-// import { Card } from "@/components/ui/card"
 import { Card } from "../components/ui/card"
 import { ArrowRight, MessageCircle, Brain, Target, TrendingUp, Sparkles } from "lucide-react"
 import Link from "next/link"
