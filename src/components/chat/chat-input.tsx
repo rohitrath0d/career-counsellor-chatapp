@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useRef, type KeyboardEvent } from "react"
 import { Button } from "../ui/button"
 import { Textarea } from "../ui/textarea"
@@ -9,11 +9,13 @@ import { trpc } from "../../utils/trpc"
 interface ChatInputProps {
   chatId: string
   disabled?: boolean
-  // onMessageSent?: () => void // Callback for when message is sent
   onMessageSent: (content: string) => void
 }
 
-export function ChatInput({ chatId, currentSession, disabled, onMessageSent }: ChatInputProps) {
+export function ChatInput({
+  chatId,
+  disabled,
+  onMessageSent }: ChatInputProps) {
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -26,18 +28,6 @@ export function ChatInput({ chatId, currentSession, disabled, onMessageSent }: C
 
     // Optimistic UI handled by parent via onMessageSent
     onMessageSent(trimmedMessage)   // only call parent callback
-
-
-    // try {
-    //   await sendMessage.mutateAsync({
-    //     chatId,
-    //     content: trimmedMessage,
-    //     role: "user"
-    //   })
-    // } catch (err) {
-    //   console.error("Failed to send message:", err)
-    // }
-
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {

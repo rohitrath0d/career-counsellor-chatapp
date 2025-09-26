@@ -1,10 +1,7 @@
-
-
 import { useEffect, useRef } from "react"
 import { ScrollArea } from "../ui/scroll-area"
 import { Avatar, AvatarFallback } from "../ui/avatar"
 import { Bot, User, Sparkles } from "lucide-react"
-// import { cn } from "@/lib/utils"
 import { cn } from "../../lib/utils"
 
 interface ChatMessagesProps {

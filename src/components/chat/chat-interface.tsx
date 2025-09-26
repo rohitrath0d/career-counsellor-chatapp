@@ -1,5 +1,4 @@
-"use client"
-
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useRef } from "react"
 import { ChatSidebar } from "./chat-sidebar"
 import { ChatMessages } from "./chat-message"
