@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ScrollArea } from "../ui/scroll-area"
 import { Avatar, AvatarFallback } from "../ui/avatar"
 import { Bot, User, Sparkles } from "lucide-react"
@@ -19,9 +19,16 @@ export function ChatMessages({ messages,  isTyping = false }: ChatMessagesProps)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  const [count, setCount] = useState(0);
+
+  console.log(count);
+
   // Auto-scroll when new messages or typing indicator
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+
+    setCount((prev) => prev + 1);
+
   }, [messages, isTyping])
 
   if (messages.length === 0) {

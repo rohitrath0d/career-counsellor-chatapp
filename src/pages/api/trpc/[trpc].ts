@@ -1,10 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { } from 'next';
-// import { createNextApiHandler } from "@trpc/server/adapters/next";
 import * as trpcNext from "@trpc/server/adapters/next";
-// import { appRouter } from "@/server/routers";
 import { appRouter } from "../../../server/routers/index"
-// import { createContext } from "@/server/context/context";
 import { createContext } from "../../../server/context/context"
 
 // export default createNextApiHandler({
@@ -14,9 +11,6 @@ import { createContext } from "../../../server/context/context"
 
 // export API handler
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-
-  
-
 
   return trpcNext.createNextApiHandler({
     router: appRouter,                // appRouter is your main router that combines all sub-routers (chat, user, etc.).

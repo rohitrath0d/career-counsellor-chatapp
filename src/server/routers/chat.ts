@@ -133,12 +133,6 @@ export const chatRouter = router({
         },
       });
 
-      // fetch past messages to maintain context
-      // const pastMessages = await ctx.prisma.message.findMany({
-      //   where: { sessionId: input.chatId },
-      //   orderBy: { createdAt: "asc" },
-      // });
-
       const pastMessages = await ctx.prisma.message.findMany({
         where: { sessionId: input.chatId },
         orderBy: { createdAt: "asc" },
@@ -216,15 +210,6 @@ export const chatRouter = router({
     .subscription(({ input }) => {
       return observable<{ user: Message; ai: Message }>((emit) => {
 
-        //   const onMessage = (data: { chatId: string; user: Message; ai: Message }) => {
-        //     if (data.chatId === input.chatId) {
-        //       emit.next({ user: data.user, ai: data.ai });
-        //     }
-        //   };
-        //   ee.on("newMessage", onMessage);
-        //   return () => ee.off("newMessage", onMessage);
-        // });
-
         const channel = `chat:${input.chatId}`;
 
         const handler = (messageStr: string) => {
@@ -235,43 +220,8 @@ export const chatRouter = router({
             console.error("Redis parse error:", err);
           }
         };
-
-        // redisSub.subscribe(channel, (err) => {
-        //   if (err) console.error("Redis subscribe error:", err);
-        // });
-
-        // redisSub.on("message", (msgChannel, messageStr) => {
-        //   if (msgChannel === channel) handler(messageStr);
-        // });
-
-        // return () => {
-        //   redisSub.unsubscribe(channel);
-        // };
       });
     }),
-
-  // onMessageAdded: publicProcedure
-  //   .input(z.object({ sessionId: z.string() }))
-  //   .subscription(({ input }) => {
-  //     return observable<Message>((emit) => {
-  //       // const handler = (message: Message) => {
-  //       const handler = (pair: { chatId: string; user: Message; ai: Message }) => {
-  //         // if (message.sessionId === input.sessionId) {
-  //         if (pair.chatId === input.sessionId) {
-  //           // emit.next(message);
-  //           emit.next(pair.ai);
-
-  //         }
-  //       };
-
-  //       // messageEmitter.on('add', handler); // use an EventEmitter for pushing msgs
-  //       ee.on("messageAdded", handler);
-  //       return () => {
-  //         // messageEmitter.off('add', handler);
-  //         ee.off("messageAdded", handler);
-  //       };
-  //     });
-  //   }),
 
 
 });
